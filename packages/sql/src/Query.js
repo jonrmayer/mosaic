@@ -128,7 +128,11 @@ export class Query {
           }
         }
       }
-      query.select = query.select.concat(list);
+
+      const keys = new Set(list.map(x => x.as));
+      query.select = query.select
+        .filter(x => !keys.has(x.as))
+        .concat(list.filter(x => x.expr));
       return this;
     }
   }
@@ -576,6 +580,7 @@ export function isQuery(value) {
 }
 
 export function isDescribeQuery(value) {
+  // @ts-ignore
   return isQuery(value) && value.describe;
 }
 

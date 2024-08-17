@@ -41,20 +41,58 @@ type Arg2Opt = Arg | [Arg, Arg?];
  */
 type Arg3Opt = Arg | [Arg, Arg?, Arg?];
 
-/** Bin transform options. */
-export interface BinOptions {
+/** Binning interval names. */
+export type BinInterval =
+  | 'date'
+  | 'number'
+  | 'millisecond'
+  | 'second'
+  | 'minute'
+  | 'hour'
+  | 'day'
+  | 'month'
+  | 'year';
+
+/* A bin transform. */
+export interface Bin {
+  /**
+   * Bin a continuous variable into discrete intervals. The bin argument
+   * specifies a data column or expression to bin. Both numerical and
+   * temporal (date/time) values are supported.
+   */
+  bin: Arg | [Arg];
+  /**
+   * The interval bin unit to use, typically used to indicate a date/time
+   * unit for binning temporal values, such as `hour`, `day`, or `month`.
+   * If `date`, the extent of data values is used to automatically select
+   * an interval for temporal data. The value `number` enforces normal
+   * numerical binning, even over temporal data. If unspecified, defaults
+   * to `number` for numerical data and `date` for temporal data.
+   */
+  interval?: BinInterval;
+  /**
+   * The step size to use between bins. When binning numerical values (or
+   * interval type `number`), this setting specifies the numerical step size.
+   * For data/time intervals, this indicates the number of steps of that unit,
+   * such as hours, days, or years.
+   */
+  step?: number;
   /**
    * The target number of binning steps to use. To accommodate human-friendly
-   * bin boundaries, the actual number of bins may diverge from this exact number.
+   * ("nice") bin boundaries, the actual number of bins may diverge from this
+   * exact value. This option is ignored when **step** is specified.
    */
   steps?: number;
   /**
-   * The minimum allowed bin step size (default `0`).
-   * For example, a setting of `1` will prevent step sizes less than 1.
+   * The minimum allowed bin step size (default `0`) when performing numerical
+   * binning. For example, a setting of `1` prevents step sizes less than 1.
+   * This option is ignored when **step** is specified.
    */
   minstep?: number;
   /**
-   * A flag requesting "nice" human-friendly step sizes (default `true`).
+   * A flag (default `true`) requesting "nice" human-friendly end points and
+   * step sizes when performing numerical binning. When **step** is specified,
+   * this option affects the binning end points (e.g., origin) only.
    */
   nice?: true;
   /**
@@ -62,15 +100,6 @@ export interface BinOptions {
    * result in using the next consecutive bin boundary.
    */
   offset?: number;
-}
-
-/* A bin transform. */
-export interface Bin {
-  /**
-   * Bin a continuous variable into discrete intervals. This transform accepts
-   * a data column to bin over as well as an optional bin options object.
-   */
-  bin: Arg | [Arg] | [Arg, BinOptions];
 }
 
 /* A dateMonth transform. */
@@ -168,6 +197,22 @@ export interface Count extends AggregateOptions, WindowOptions {
   count: Arg0 | Arg1;
 }
 
+/* A sample covariance aggregate transform. */
+export interface Covariance extends AggregateOptions, WindowOptions {
+  /**
+   * Compute the sample covariance of between the given columns.
+   */
+  covariance: Arg2;
+}
+
+/* A population covariance aggregate transform. */
+export interface CovarPop extends AggregateOptions, WindowOptions {
+  /**
+   * Compute the population covariance of between the given columns.
+   */
+  covarPop: Arg2;
+}
+
 /* A first aggregate transform. */
 export interface First extends AggregateOptions, WindowOptions {
   /**
@@ -233,12 +278,44 @@ export interface Quantile extends AggregateOptions, WindowOptions {
   quantile: Arg2;
 }
 
+/* A sample standard deviation aggregate transform. */
+export interface Stddev extends AggregateOptions, WindowOptions {
+  /**
+   * Compute the sum of the given column.
+   */
+  stddev: Arg1;
+}
+
+/* A population standard deviation aggregate transform. */
+export interface StddevPop extends AggregateOptions, WindowOptions {
+  /**
+   * Compute the sum of the given column.
+   */
+  stddevPop: Arg1;
+}
+
 /* A sum aggregate transform. */
 export interface Sum extends AggregateOptions, WindowOptions {
   /**
    * Compute the sum of the given column.
    */
   sum: Arg1;
+}
+
+/* A sample variance aggregate transform. */
+export interface Variance extends AggregateOptions, WindowOptions {
+  /**
+   * Compute the sample variance of the given column.
+   */
+  variance: Arg1;
+}
+
+/* A population variance aggregate transform. */
+export interface VarPop extends AggregateOptions, WindowOptions {
+  /**
+   * Compute the population variance of the given column.
+   */
+  varPop: Arg1;
 }
 
 /* A row_number window transform. */
@@ -370,7 +447,11 @@ export type AggregateTransform =
   | Mode
   | Product
   | Quantile
-  | Sum;
+  | Stddev
+  | StddevPop
+  | Sum
+  | Variance
+  | VarPop;
 
 /* A window transform that operates over a sorted domain. */
 export type WindowTransform =

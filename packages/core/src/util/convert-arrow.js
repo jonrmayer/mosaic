@@ -1,6 +1,10 @@
 import { DataType } from 'apache-arrow';
 
 /**
+ * @typedef {import('apache-arrow').Vector} Vector
+ */
+
+/**
  * Test if a value is an Apache Arrow table.
  * As sometimes multiple Arrow versions may be used simultaneously,
  * we use a "duck typing" approach and check for a getChild function.
@@ -32,8 +36,8 @@ export function convertArrowArrayType(type) {
  * @returns a value conversion function
  */
 export function convertArrowValue(type) {
-  // map timestamp numbers to date objects
-  if (DataType.isTimestamp(type)) {
+  // map dates and timestamp numbers to date objects
+  if (DataType.isDate(type) || DataType.isTimestamp(type)) {
     return v => v == null ? v : new Date(v);
   }
 
@@ -58,14 +62,14 @@ export function convertArrowValue(type) {
  * Large integers (BigInt) are converted to Float64 numbers.
  * Fixed-point decimal values are convert to Float64 numbers.
  * Otherwise, the default Arrow values are used.
- * @param {*} column An Apache Arrow column
+ * @param {Vector} column An Apache Arrow column
  * @returns an array of values
  */
 export function convertArrowColumn(column) {
   const { type } = column;
 
-  // map timestamp numbers to date objects
-  if (DataType.isTimestamp(type)) {
+  // map dates and timestamp numbers to date objects
+  if (DataType.isDate(type) || DataType.isTimestamp(type)) {
     const size = column.length;
     const array = new Array(size);
     for (let row = 0; row < size; ++row) {
@@ -78,10 +82,10 @@ export function convertArrowColumn(column) {
   // map bigint to number
   if (DataType.isInt(type) && type.bitWidth >= 64) {
     const size = column.length;
-    const array = new Float64Array(size);
+    const array = column.nullCount ? new Array(size) : new Float64Array(size);
     for (let row = 0; row < size; ++row) {
       const v = column.get(row);
-      array[row] = v == null ? NaN : Number(v);
+      array[row] = v == null ? null : Number(v);
     }
     return array;
   }
@@ -90,12 +94,17 @@ export function convertArrowColumn(column) {
   if (DataType.isDecimal(type)) {
     const scale = 1 / Math.pow(10, type.scale);
     const size = column.length;
-    const array = new Float64Array(size);
+    const array = column.nullCount ? new Array(size) : new Float64Array(size);
     for (let row = 0; row < size; ++row) {
       const v = column.get(row);
-      array[row] = v == null ? NaN : decimalToNumber(v, scale);
+      array[row] = v == null ? null : decimalToNumber(v, scale);
     }
     return array;
+  }
+
+  // if there are null values, use a standard array
+  if (column.nullCount) {
+    return Array.from(column);
   }
 
   // otherwise use Arrow JS defaults

@@ -1,4 +1,5 @@
 import { range } from 'd3';
+import { toDataColumns } from '@uwdata/mosaic-core';
 import {
   Query, max, min, castDouble, isNotNull,
   regrIntercept, regrSlope, regrCount,
@@ -7,7 +8,6 @@ import {
 import { qt } from './util/stats.js';
 import { Mark, channelOption } from './Mark.js';
 import { handleParam } from './util/handle-param.js';
-import { toDataColumns } from './util/to-data-columns.js';
 
 export class RegressionMark extends Mark {
   constructor(source, options) {
@@ -118,7 +118,7 @@ function concat(a, b) {
 
 function linePoints(fit) {
   // eslint-disable-next-line no-unused-vars
-  const { x0, x1, xm, intercept, slope, n, ssx, ssy, ...rest } = fit.columns;
+  const { x0 = [], x1 = [], xm, intercept, slope, n, ssx, ssy, ...rest } = fit.columns;
   const predict = (x, i) => intercept[i] + x * slope[i];
   const x = concat(x0, x1);
   const y = concat(x0.map(predict), x1.map(predict));

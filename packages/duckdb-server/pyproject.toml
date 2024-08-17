@@ -10,7 +10,7 @@ readme = "README.md"
 requires-python = ">=3.9"
 dependencies = [
   "diskcache",
-  "duckdb==0.10.2",
+  "duckdb==1.0.0",
   "pandas",
   "pyarrow",
   "socketify",
@@ -31,13 +31,13 @@ dev = [
 [tool.hatch.envs.default]
 python = "3.11"
 features = ["dev"]
-uv = true
+installer = "uv"
 
 [tool.hatch.envs.default.scripts]
 serve = "watchmedo auto-restart --pattern '*.py' --recursive --signal SIGTERM python pkg/__main__.py"
 
 [tool.hatch.envs.test]
-uv = true
+installer = "uv"
 dependencies = [
   "coverage[toml]",
   "pytest",
